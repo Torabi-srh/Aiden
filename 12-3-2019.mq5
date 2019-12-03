@@ -272,9 +272,19 @@ void OnTick() {
    }
 }
 void TrailingStopAll() {
+double SPROF = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--) {
-      TrailingStop(i);
+      ulong ticket = PositionGetTicket(i);
+      double POFF = PositionGetDouble(POSITION_PROFIT);
+      SPROF += POFF;
+      if(ticket > 0) {
+         if (POFF < 100) {
+            TSList.Add(ticket);
+            TrailingStop(i);
+         }
+      }
    }
+   if (SPROF <= -100.0) CloseAllPositions();
 }
 bool inList(long find, CArrayLong& inA) {
    for(int i = 0; i < inA.Total(); i++) {
