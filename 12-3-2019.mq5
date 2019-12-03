@@ -231,19 +231,29 @@ void OnTick() {
       if (NCC) {
          CurrentSignal = Brain(symbol, HorizonTimeFrame);
       }
-      Comment("Current Signal is: ", EnumToString(CurrentSignal), "\n", "Horizon is: ", EnumToString(UpT));
-      if (CurrentLot > 0.0) {
+      Comment("Last Signal was: ", EnumToString(lastSignal), "\n", "Current Signal is: ", EnumToString(CurrentSignal), "\n", "Horizon is: ", EnumToString(UpT));
+      if (CurrentLot > 0.0 && CurrentSignal != none) {
+            double R3, S3, R1, S1, R2, S2, PP;
+      double ihigh = iHigh(symbol, PeriodTrailingStop, 1), ilow = iLow(symbol, PeriodTrailingStop, 1), iclose = iClose(symbol, PeriodTrailingStop, 1);
+      PP = (ihigh + ilow + iclose) / 3;
+      R3 = ihigh + 2 * (PP - ilow);
+      S3 = ilow  - 2 * (ihigh - PP);
+      R2 = PP + (ihigh - ilow);
+      S2 = PP - (ihigh - ilow);
+      R1 = (2 * PP) - ilow;
+      S1 = (2 * PP) - ihigh;
+      
          if(CurrentSignal == buy) {
             if(lastSignal == sell)
                CloseAllPositions();
-            if(trade.Buy(cvolume, symbol, price_ask, 0, 0, symbol)) {
+            if(trade.Buy(cvolume, symbol, price_ask, 0, R3, symbol)) {
                CurrentLot -= cvolume;
                lastSignal = buy;
             }
          } else if(CurrentSignal == sell) {
             if(lastSignal == buy)
                CloseAllPositions();
-            if(trade.Sell(cvolume, symbol, price_bid, 0, 0, symbol)) {
+            if(trade.Sell(cvolume, symbol, price_bid, 0, S3, symbol)) {
                CurrentLot -= cvolume;
                lastSignal = sell;
             }
