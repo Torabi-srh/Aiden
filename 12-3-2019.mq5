@@ -25,9 +25,9 @@ input bool     thu = true;                                                     /
 input bool     fri = true;                                                     // Work on Friday                                                     // Work on Friday
 input int      VerticalCount = 22;                                             // Vertical Period
 input int      HorizonCount = 22;                                              // Horizon Period
-input ENUM_TIMEFRAMES VerticalTimeFrame = PERIOD_H1;                                   // Vertical Timeframe
-input ENUM_TIMEFRAMES HorizonTimeFrame = PERIOD_M15;                                // Horizon Timeframe
-input ENUM_TIMEFRAMES PeriodTrailingStop = PERIOD_H1;                                // TrailingStop Timeframe
+input ENUM_TIMEFRAMES VerticalTimeFrame = PERIOD_M10;                                   // Vertical Timeframe
+input ENUM_TIMEFRAMES HorizonTimeFrame = PERIOD_M6;                                // Horizon Timeframe
+input ENUM_TIMEFRAMES PeriodTrailingStop = PERIOD_M6;                                // TrailingStop Timeframe
 
 double cvolume = 0.0;
 double MaximumRisk = 0.0;
@@ -138,13 +138,13 @@ signal Horizon(string symbol, ENUM_TIMEFRAMES period, int shrtMA = 22) {
    double HValue[];
    double MValue[];
    double LValue[];
-   double ihigh = iHigh(symbol, period, 1), ilow = iLow(symbol, period, 1), iclose = iClose(symbol, period, 1);
+   double ihigh = iHigh(symbol, period, 0), ilow = iLow(symbol, period, 0), iclose = iClose(symbol, period, 0);
    ArraySetAsSeries(HValue, true);
-   CopyBuffer(PCI, 0, 1, 2, HValue);
+   CopyBuffer(PCI, 0, 1, 1, HValue);
    ArraySetAsSeries(MValue, true);
-   CopyBuffer(PCI, 1, 1, 2, MValue);
+   CopyBuffer(PCI, 1, 1, 1, MValue);
    ArraySetAsSeries(LValue, true);
-   CopyBuffer(PCI, 2, 1, 2, LValue);
+   CopyBuffer(PCI, 2, 1, 1, LValue);
    if (LValue[0] > ilow && MValue[0] > iclose) return buy;
    else if (HValue[0] < ihigh && MValue[0] < iclose) return sell;
    return none;
@@ -294,7 +294,7 @@ void TrailingStop(int i) {
       double SLC = PositionGetDouble(POSITION_SL);
       double TPC = PositionGetDouble(POSITION_TP);
       double R3, S3, R1, S1, R2, S2, PP;
-      double ihigh = iHigh(symbol, PeriodTrailingStop, 0), ilow = iLow(symbol, PeriodTrailingStop, 0), iclose = iClose(symbol, PeriodTrailingStop, 0);
+      double ihigh = iHigh(symbol, PeriodTrailingStop, 1), ilow = iLow(symbol, PeriodTrailingStop, 1), iclose = iClose(symbol, PeriodTrailingStop, 1);
       PP = (ihigh + ilow + iclose) / 3;
       R3 = ihigh + 2 * (PP - ilow);
       S3 = ilow  - 2 * (ihigh - PP);
@@ -322,12 +322,16 @@ void TrailingStop(int i) {
          double NSLB = NormalizeDouble(R3, _Digits);
          double NSLS = NormalizeDouble(R1, _Digits);
          if(UpT == sell) {
-            if(!trade.PositionModify(PositionTicket, NSLB, 0) && NSLB < SLC) {
-               Print("error");
+            if (NSLB < SLC) {
+               if(!trade.PositionModify(PositionTicket, NSLB, 0)) {
+                  Print("error");
+               }
             }
          } else {
-            if(!trade.PositionModify(PositionTicket, NSLS, 0) && NSLS < SLC) {
-               Print("error");
+            if (NSLS < SLC) {
+               if(!trade.PositionModify(PositionTicket, NSLS, 0)) {
+                  Print("error");
+               }
             }
          }
       }
